@@ -1,0 +1,323 @@
+:root {
+  --bg-top: #1b2a4a;
+  --bg-bottom: #0d1426;
+  --accent: #ffd166;
+  --accent-2: #6fd6ff;
+  --panel: rgba(16, 24, 44, 0.82);
+  --text: #eef2ff;
+  --muted: #9fb0d0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--text);
+}
+
+body {
+  overflow: hidden;
+  background: radial-gradient(
+    circle at 50% 20%,
+    var(--bg-top),
+    var(--bg-bottom)
+  );
+}
+
+.app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* The 3D canvas fills the whole screen, behind the UI. */
+.scene-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  letter-spacing: 0.04em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+}
+
+.hero p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: clamp(0.85rem, 2vw, 1rem);
+}
+
+/* ---------------- Chat box ---------------- */
+.chatbox {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(560px, 92vw);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 34vh;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.chat-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 16px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  animation: pop 0.25s ease;
+}
+
+.chat-msg.user {
+  align-self: flex-end;
+  background: var(--accent-2);
+  color: #06243a;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-msg.bot {
+  align-self: flex-start;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom-left-radius: 4px;
+}
+
+.source-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.source-chip {
+  display: inline-flex;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-msg.typing {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 8px;
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 6px 6px 6px 16px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+.chat-input-row input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 1rem;
+}
+
+.chat-input-row input::placeholder {
+  color: var(--muted);
+}
+
+.chat-input-row button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--accent);
+  color: #2a1d00;
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+
+.chat-input-row button:hover {
+  transform: translateY(-1px);
+}
+
+.chat-input-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chat-suggestions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chat-suggestions button {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-suggestions button:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+/* ---------------- Project paper ---------------- */
+.paper-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 8, 18, 0.55);
+  backdrop-filter: blur(3px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.paper-backdrop.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.paper {
+  width: min(640px, 92vw);
+  max-height: 82vh;
+  overflow-y: auto;
+  background: #fdf6e3;
+  color: #2b2b2b;
+  border-radius: 6px;
+  padding: 28px 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  transform: translateY(40px) rotate(-1deg) scale(0.96);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.4s ease;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    rgba(0, 0, 0, 0.05) 32px
+  );
+}
+
+.paper-backdrop.visible .paper {
+  transform: translateY(0) rotate(-1deg) scale(1);
+  opacity: 1;
+}
+
+.paper h2 {
+  margin: 0 0 4px;
+  font-size: 1.5rem;
+}
+
+.paper .paper-sub {
+  margin: 0 0 18px;
+  color: #6b6b6b;
+  font-size: 0.9rem;
+}
+
+.project {
+  padding: 14px 0;
+  border-top: 1px dashed rgba(0, 0, 0, 0.18);
+}
+
+.project h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.project p {
+  margin: 0 0 6px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.project a {
+  color: #1a6fb5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.project a:hover {
+  text-decoration: underline;
+}
+
+.paper-close {
+  position: sticky;
+  top: 0;
+  float: right;
+  border: none;
+  background: #2b2b2b;
+  color: #fdf6e3;
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+@keyframes pop {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.hint {
+  position: absolute;
+  bottom: 8px;
+  right: 12px;
+  z-index: 2;
+  color: var(--muted);
+  font-size: 0.72rem;
+  opacity: 0.7;
+}

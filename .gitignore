@@ -1,0 +1,6 @@
+backend/.venv/
+backend/__pycache__/
+backend/rag_index.json
+frontend/node_modules/
+frontend/dist/
+.env
