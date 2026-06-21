@@ -6,6 +6,8 @@ real projects. Everything else (the Q&A engine and the 3D frontend) reads
 from here.
 """
 
+import re
+
 # ---------------------------------------------------------------------------
 # Your name (shown in greetings and the project paper header).
 # ---------------------------------------------------------------------------
@@ -159,3 +161,38 @@ FALLBACK_RESPONSE = (
     "Hmm, I'm just a simple avatar so I might not have caught that. Try asking "
     "about Geen, the projects, skills, or contact info!"
 )
+
+# ---------------------------------------------------------------------------
+# Action gestures the 3D avatar can perform on request. Each key is a gesture
+# the frontend knows how to animate; the values are the words/phrases that, if
+# present in the visitor's question, trigger it. Phrases (with spaces) match as
+# substrings; single words match on word boundaries.
+# ---------------------------------------------------------------------------
+GESTURE_KEYWORDS = {
+    "wave": ["wave", "say hi", "say hello", "greet", "greeting"],
+    "run": ["run", "running", "sprint", "sprinting", "jog", "jogging"],
+    "walk": ["walk", "walking", "stroll", "strolling", "pace"],
+}
+
+
+def detect_gesture(question: str) -> str | None:
+    """Return an action gesture ("wave"/"walk"/"run") detected in the question.
+
+    Returns ``None`` when no gesture keyword is found.
+    """
+    normalized = re.sub(r"[^a-z0-9\s]", " ", (question or "").lower())
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    if not normalized:
+        return None
+
+    for gesture, keywords in GESTURE_KEYWORDS.items():
+        for keyword in keywords:
+            kw = keyword.lower().strip()
+            if not kw:
+                continue
+            if " " in kw:
+                if kw in normalized:
+                    return gesture
+            elif re.search(rf"\b{re.escape(kw)}\b", normalized):
+                return gesture
+    return None

@@ -24,10 +24,13 @@ def _rule_based_answer(question: str) -> dict:
             best_score = score
             best_intent = intent
 
+    gesture = knowledge.detect_gesture(question)
+
     if best_intent is None or best_score == 0:
         return {
             "answer": knowledge.FALLBACK_RESPONSE,
             "action": None,
+            "gesture": gesture,
             "projects": None,
             "sources": [],
         }
@@ -35,6 +38,7 @@ def _rule_based_answer(question: str) -> dict:
     response = {
         "answer": best_intent["response"],
         "action": best_intent.get("action"),
+        "gesture": gesture,
         "projects": None,
         "sources": [],
     }

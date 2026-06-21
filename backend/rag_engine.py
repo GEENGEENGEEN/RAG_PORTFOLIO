@@ -174,6 +174,7 @@ def answer(question: str) -> dict[str, Any]:
     return {
         "answer": answer_text,
         "action": action,
+        "gesture": knowledge.detect_gesture(question),
         "projects": knowledge.PROJECTS if action == "show_projects" else None,
         "sources": [_source_from_chunk(chunk) for chunk in chunks],
     }

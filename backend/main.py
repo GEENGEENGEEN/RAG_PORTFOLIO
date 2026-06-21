@@ -64,6 +64,7 @@ class Source(BaseModel):
 class AskResponse(BaseModel):
     answer: str
     action: str | None = None
+    gesture: str | None = None
     projects: list[Project] | None = None
     sources: list[Source] = Field(default_factory=list)
 
