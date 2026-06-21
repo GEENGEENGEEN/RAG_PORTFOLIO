@@ -101,7 +101,7 @@ INTENTS = [
             "bio", "tell me about", "your story", "background", "geen",
         ],
         "response": BIO + " Want to see what I've built? Just ask about my projects!",
-        "action": "show_projects",
+        "action": None,
     },
     {
         "name": "skills",
