@@ -12,49 +12,121 @@ const PAPER = "#fdf6e3";
 
 /**
  * A procedurally built low-poly humanoid. Everything is made of Three.js
- * primitives with flat shading for the faceted look. Two animations:
- *   - idle: gentle breathing + head bob + sway
- *   - handing: the right arm raises forward holding a paper (gesture prop)
+ * primitives with flat shading for the faceted look. Driven by the `gesture`
+ * prop:
+ *   - idle:    gentle breathing + head bob + sway
+ *   - handing: the right arm raises forward holding a paper
+ *   - wave:    the right arm raises to the side and rocks
+ *   - walk:    legs and arms swing in-place at a relaxed pace
+ *   - run:     faster, larger swings with a forward lean and bigger bob
  */
 export default function Character({ gesture }) {
   const root = useRef();
   const head = useRef();
   const rightArm = useRef(); // shoulder pivot for the gesture
   const leftArm = useRef();
+  const rightLeg = useRef(); // hip pivots for walk/run
+  const leftLeg = useRef();
   const paper = useRef();
+
+  // Blend factors so action gestures ease in/out instead of snapping.
+  const moveBlend = useRef(0); // walk / run
+  const waveBlend = useRef(0);
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime;
 
-    // --- Idle motion -------------------------------------------------------
+    const run = gesture === "run";
+    const walk = gesture === "walk";
+    const moving = run || walk;
+    const handing = gesture === "handing";
+    const wave = gesture === "wave";
+
+    // Pace/amplitude differ between walking and running.
+    const freq = run ? 11 : 6;
+    const legSwing = run ? 0.9 : 0.5;
+    const armSwing = run ? 0.8 : 0.45;
+
+    // Ease gestures in/out so transitions blend rather than snap.
+    moveBlend.current = THREE.MathUtils.lerp(
+      moveBlend.current,
+      moving ? 1 : 0,
+      delta * 6
+    );
+    waveBlend.current = THREE.MathUtils.lerp(
+      waveBlend.current,
+      wave ? 1 : 0,
+      delta * 6
+    );
+    const mb = moveBlend.current;
+    const wb = waveBlend.current;
+
+    // --- Root: sway + bob, plus a forward lean while moving ----------------
     if (root.current) {
-      root.current.rotation.y = Math.sin(t * 0.4) * 0.12; // slow sway
-      root.current.position.y = Math.sin(t * 1.6) * 0.02; // subtle bob
+      root.current.rotation.y = Math.sin(t * 0.4) * 0.12 * (1 - mb); // slow sway
+      const idleBob = Math.sin(t * 1.6) * 0.02;
+      const moveBob = Math.abs(Math.sin(t * freq)) * (run ? 0.1 : 0.05);
+      root.current.position.y = idleBob * (1 - mb) + moveBob * mb;
+      const leanTarget = run ? 0.18 : walk ? 0.08 : 0;
+      root.current.rotation.x = THREE.MathUtils.lerp(
+        root.current.rotation.x,
+        leanTarget,
+        delta * 4
+      );
     }
     if (head.current) {
       head.current.rotation.z = Math.sin(t * 0.8) * 0.04;
       head.current.rotation.x = Math.sin(t * 1.2) * 0.03;
     }
-    if (leftArm.current) {
-      leftArm.current.rotation.x = Math.sin(t * 1.3) * 0.05;
+
+    // --- Legs: alternating swing from the hips while walking/running -------
+    if (rightLeg.current) {
+      rightLeg.current.rotation.x = Math.sin(t * freq) * legSwing * mb;
+    }
+    if (leftLeg.current) {
+      leftLeg.current.rotation.x = Math.sin(t * freq + Math.PI) * legSwing * mb;
     }
 
-    // --- Gesture: extend the right arm to "hand a paper" -------------------
-    const handing = gesture === "handing";
+    // --- Left arm: idle sway, or counter-swing while moving ----------------
+    if (leftArm.current) {
+      const idle = Math.sin(t * 1.3) * 0.05;
+      const swing = Math.sin(t * freq) * armSwing; // opposite phase to left leg
+      leftArm.current.rotation.x = idle * (1 - mb) + swing * mb;
+    }
+
+    // --- Right arm: handing pose, wave, move counter-swing, or idle --------
     if (rightArm.current) {
-      // Arm hangs at ~0 when idle; rotates forward (~ -1.4 rad) when handing.
-      const targetX = handing ? -1.45 : Math.sin(t * 1.3 + 1) * 0.05;
-      const targetZ = handing ? 0.25 : 0;
-      rightArm.current.rotation.x = THREE.MathUtils.lerp(
-        rightArm.current.rotation.x,
-        targetX,
-        delta * 4
-      );
-      rightArm.current.rotation.z = THREE.MathUtils.lerp(
-        rightArm.current.rotation.z,
-        targetZ,
-        delta * 4
-      );
+      const idleX = Math.sin(t * 1.3 + 1) * 0.05;
+      const swingX = Math.sin(t * freq + Math.PI) * armSwing;
+      const baseX = idleX * (1 - mb) + swingX * mb;
+
+      if (handing) {
+        // Hand-off pose: arm forward holding the paper.
+        rightArm.current.rotation.x = THREE.MathUtils.lerp(
+          rightArm.current.rotation.x,
+          -1.45,
+          delta * 4
+        );
+        rightArm.current.rotation.z = THREE.MathUtils.lerp(
+          rightArm.current.rotation.z,
+          0.25,
+          delta * 4
+        );
+      } else {
+        // Raise the arm to the side and rock it while waving.
+        const waveZ = (2.1 + Math.sin(t * 12) * 0.4) * wb;
+        const targetX = baseX * (1 - wb);
+        rightArm.current.rotation.x = THREE.MathUtils.lerp(
+          rightArm.current.rotation.x,
+          targetX,
+          delta * 8
+        );
+        rightArm.current.rotation.z = THREE.MathUtils.lerp(
+          rightArm.current.rotation.z,
+          waveZ,
+          delta * 8
+        );
+      }
     }
 
     // Fade/scale the paper in only while handing.
@@ -161,8 +233,8 @@ export default function Character({ gesture }) {
         </mesh>
       </group>
 
-      {/* ---------------- Legs ---------------- */}
-      <group position={[0.22, 0.42, 0]}>
+      {/* ---------------- Legs (hip pivots for walk/run) ---------------- */}
+      <group ref={rightLeg} position={[0.22, 0.42, 0]}>
         <mesh position={[0, -0.2, 0]} castShadow>
           <boxGeometry args={[0.26, 0.84, 0.28]} />
           <meshStandardMaterial color={PANTS} flatShading />
@@ -172,7 +244,7 @@ export default function Character({ gesture }) {
           <meshStandardMaterial color={SHOES} flatShading />
         </mesh>
       </group>
-      <group position={[-0.22, 0.42, 0]}>
+      <group ref={leftLeg} position={[-0.22, 0.42, 0]}>
         <mesh position={[0, -0.2, 0]} castShadow>
           <boxGeometry args={[0.26, 0.84, 0.28]} />
           <meshStandardMaterial color={PANTS} flatShading />
