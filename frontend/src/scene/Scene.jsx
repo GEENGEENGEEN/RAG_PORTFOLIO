@@ -33,12 +33,6 @@ export default function Scene({ gesture }) {
           blur={2.4}
           far={4}
         />
-
-        {/* A simple low-poly disc "stage" under the character. */}
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-          <cylinderGeometry args={[2.4, 2.4, 0.12, 9]} />
-          <meshStandardMaterial color="#243657" flatShading />
-        </mesh>
       </group>
 
       <Environment preset="city" />
