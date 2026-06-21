@@ -24,7 +24,11 @@ export default function Character({ gesture }) {
   const root = useRef();
   const head = useRef();
   const rightArm = useRef(); // shoulder pivot for the gesture
+  const rightElbow = useRef(); // elbow pivot (forearm + hand)
+  const rightWrist = useRef(); // wrist pivot (hand + paper)
   const leftArm = useRef();
+  const leftElbow = useRef();
+  const leftWrist = useRef();
   const rightLeg = useRef(); // hip pivots for walk/run
   const leftLeg = useRef();
   const paper = useRef();
@@ -87,11 +91,29 @@ export default function Character({ gesture }) {
       leftLeg.current.rotation.x = Math.sin(t * freq + Math.PI) * legSwing * mb;
     }
 
+    // Helper: ease a joint's rotation channel toward a target this frame.
+    const ease = (obj, axis, target, rate = 8) => {
+      obj.rotation[axis] = THREE.MathUtils.lerp(
+        obj.rotation[axis],
+        target,
+        delta * rate
+      );
+    };
+
     // --- Left arm: idle sway, or counter-swing while moving ----------------
     if (leftArm.current) {
       const idle = Math.sin(t * 1.3) * 0.05;
       const swing = Math.sin(t * freq) * armSwing; // opposite phase to left leg
       leftArm.current.rotation.x = idle * (1 - mb) + swing * mb;
+    }
+    // Forearm follows the upper arm's swing with a slight lag/bend while moving.
+    if (leftElbow.current) {
+      const bend = (0.25 + Math.max(0, Math.sin(t * freq)) * 0.5) * mb;
+      ease(leftElbow.current, "z", bend);
+      ease(leftElbow.current, "x", 0);
+    }
+    if (leftWrist.current) {
+      ease(leftWrist.current, "z", 0);
     }
 
     // --- Right arm: handing pose, wave, move counter-swing, or idle --------
@@ -102,31 +124,38 @@ export default function Character({ gesture }) {
 
       if (handing) {
         // Hand-off pose: arm forward holding the paper.
-        rightArm.current.rotation.x = THREE.MathUtils.lerp(
-          rightArm.current.rotation.x,
-          -1.45,
-          delta * 4
-        );
-        rightArm.current.rotation.z = THREE.MathUtils.lerp(
-          rightArm.current.rotation.z,
-          0.25,
-          delta * 4
-        );
+        ease(rightArm.current, "x", -1.45, 4);
+        ease(rightArm.current, "z", 0.25, 4);
       } else {
-        // Raise the arm to the side and rock it while waving.
-        const waveZ = (2.1 + Math.sin(t * 12) * 0.4) * wb;
+        // Raise the upper arm to the side; the wave itself happens at the
+        // elbow/wrist below.
         const targetX = baseX * (1 - wb);
-        rightArm.current.rotation.x = THREE.MathUtils.lerp(
-          rightArm.current.rotation.x,
-          targetX,
-          delta * 8
-        );
-        rightArm.current.rotation.z = THREE.MathUtils.lerp(
-          rightArm.current.rotation.z,
-          waveZ,
-          delta * 8
-        );
+        const targetZ = 2.0 * wb;
+        ease(rightArm.current, "x", targetX);
+        ease(rightArm.current, "z", targetZ);
       }
+    }
+
+    // Right elbow: drives the actual side-to-side wave, a slight presentation
+    // bend while handing, a follow-swing while moving, else neutral.
+    if (rightElbow.current) {
+      let targetZ = 0;
+      let targetX = 0;
+      if (wb > 0.001) {
+        targetZ = (0.3 + Math.sin(t * 12) * 0.6) * wb;
+      } else if (handing) {
+        targetZ = 0.3;
+      } else if (mb > 0.001) {
+        targetZ = (0.25 + Math.max(0, Math.sin(t * freq + Math.PI)) * 0.5) * mb;
+      }
+      ease(rightElbow.current, "z", targetZ);
+      ease(rightElbow.current, "x", targetX);
+    }
+
+    // Right wrist: a subtle flick that trails the wave for a natural feel.
+    if (rightWrist.current) {
+      const targetZ = wb > 0.001 ? Math.sin(t * 12 + 0.5) * 0.25 * wb : 0;
+      ease(rightWrist.current, "z", targetZ);
     }
 
     // Fade/scale the paper in only while handing.
@@ -179,58 +208,79 @@ export default function Character({ gesture }) {
         <meshStandardMaterial color={PANTS} flatShading />
       </mesh>
 
-      {/* ---------------- Right arm (gesture pivot at shoulder) -------- */}
+      {/* ---------------- Right arm (shoulder -> elbow -> wrist) -------- */}
       <group ref={rightArm} position={[0.55, 1.55, 0]}>
-        {/* Upper + forearm extend downward from the pivot. */}
-        <mesh position={[0, -0.42, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.84, 0.22]} />
+        {/* Upper arm (sleeve) */}
+        <mesh position={[0, -0.27, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.5, 0.22]} />
           <meshStandardMaterial color={SHIRT} flatShading />
         </mesh>
-        <mesh position={[0, -0.92, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.36, 0.2]} />
-          <meshStandardMaterial color={SKIN} flatShading />
-        </mesh>
-        {/* Hand */}
-        <mesh position={[0, -1.14, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.2, 0.22]} />
-          <meshStandardMaterial color={SKIN} flatShading />
-        </mesh>
-        {/* Paper held in the hand; appears during the handing gesture. */}
-        <group ref={paper} position={[0, -1.2, 0.18]} scale={0}>
-          <mesh rotation={[Math.PI / 2.4, 0, 0]}>
-            <planeGeometry args={[0.5, 0.66]} />
-            <meshStandardMaterial
-              color={PAPER}
-              side={THREE.DoubleSide}
-              flatShading
-            />
+
+        {/* Elbow pivot */}
+        <group ref={rightElbow} position={[0, -0.54, 0]}>
+          {/* Forearm */}
+          <mesh position={[0, -0.25, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.42, 0.2]} />
+            <meshStandardMaterial color={SKIN} flatShading />
           </mesh>
-          {/* a couple of "text" lines on the paper */}
-          <mesh position={[0, 0.04, 0.18]} rotation={[Math.PI / 2.4, 0, 0]}>
-            <planeGeometry args={[0.34, 0.03]} />
-            <meshStandardMaterial color="#888" side={THREE.DoubleSide} />
-          </mesh>
-          <mesh position={[0, -0.04, 0.12]} rotation={[Math.PI / 2.4, 0, 0]}>
-            <planeGeometry args={[0.34, 0.03]} />
-            <meshStandardMaterial color="#888" side={THREE.DoubleSide} />
-          </mesh>
+
+          {/* Wrist pivot */}
+          <group ref={rightWrist} position={[0, -0.5, 0]}>
+            {/* Hand */}
+            <mesh position={[0, -0.13, 0]} castShadow>
+              <boxGeometry args={[0.2, 0.2, 0.22]} />
+              <meshStandardMaterial color={SKIN} flatShading />
+            </mesh>
+
+            {/* Paper held in the hand; appears during the handing gesture. */}
+            <group ref={paper} position={[0, -0.2, 0.18]} scale={0}>
+              <mesh rotation={[Math.PI / 2.4, 0, 0]}>
+                <planeGeometry args={[0.5, 0.66]} />
+                <meshStandardMaterial
+                  color={PAPER}
+                  side={THREE.DoubleSide}
+                  flatShading
+                />
+              </mesh>
+              {/* a couple of "text" lines on the paper */}
+              <mesh position={[0, 0.04, 0.18]} rotation={[Math.PI / 2.4, 0, 0]}>
+                <planeGeometry args={[0.34, 0.03]} />
+                <meshStandardMaterial color="#888" side={THREE.DoubleSide} />
+              </mesh>
+              <mesh position={[0, -0.04, 0.12]} rotation={[Math.PI / 2.4, 0, 0]}>
+                <planeGeometry args={[0.34, 0.03]} />
+                <meshStandardMaterial color="#888" side={THREE.DoubleSide} />
+              </mesh>
+            </group>
+          </group>
         </group>
       </group>
 
-      {/* ---------------- Left arm ---------------- */}
+      {/* ---------------- Left arm (shoulder -> elbow -> wrist) -------- */}
       <group ref={leftArm} position={[-0.55, 1.55, 0]}>
-        <mesh position={[0, -0.42, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.84, 0.22]} />
+        {/* Upper arm (sleeve) */}
+        <mesh position={[0, -0.27, 0]} castShadow>
+          <boxGeometry args={[0.2, 0.5, 0.22]} />
           <meshStandardMaterial color={SHIRT} flatShading />
         </mesh>
-        <mesh position={[0, -0.92, 0]} castShadow>
-          <boxGeometry args={[0.18, 0.36, 0.2]} />
-          <meshStandardMaterial color={SKIN} flatShading />
-        </mesh>
-        <mesh position={[0, -1.14, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.2, 0.22]} />
-          <meshStandardMaterial color={SKIN} flatShading />
-        </mesh>
+
+        {/* Elbow pivot */}
+        <group ref={leftElbow} position={[0, -0.54, 0]}>
+          {/* Forearm */}
+          <mesh position={[0, -0.25, 0]} castShadow>
+            <boxGeometry args={[0.18, 0.42, 0.2]} />
+            <meshStandardMaterial color={SKIN} flatShading />
+          </mesh>
+
+          {/* Wrist pivot */}
+          <group ref={leftWrist} position={[0, -0.5, 0]}>
+            {/* Hand */}
+            <mesh position={[0, -0.13, 0]} castShadow>
+              <boxGeometry args={[0.2, 0.2, 0.22]} />
+              <meshStandardMaterial color={SKIN} flatShading />
+            </mesh>
+          </group>
+        </group>
       </group>
 
       {/* ---------------- Legs (hip pivots for walk/run) ---------------- */}
