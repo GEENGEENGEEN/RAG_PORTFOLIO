@@ -52,6 +52,19 @@ export default function App() {
         <section className="hero-grid">
           <div className="avatar-card">
             <Scene gesture={gesture} />
+
+            <div className="speech-bubble" role="status">
+              <svg
+                className="speech-bubble__shape"
+                viewBox="0 0 320 150"
+                aria-hidden="true"
+              >
+                <path d="M60 24 H250 Q298 24 298 66 Q298 108 250 108 H96 L58 138 L80 108 H62 Q22 108 22 66 Q22 24 60 24 Z" />
+              </svg>
+              <p className="speech-bubble__text">
+                Can&apos;t talk right now &mdash; no backend hosting yet!
+              </p>
+            </div>
           </div>
 
           <div className="intro">
