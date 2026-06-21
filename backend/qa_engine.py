@@ -81,9 +81,22 @@ def _score_intent(normalized: str, keywords: list[str]) -> int:
 def answer(question: str) -> dict:
     """Return a structured response for a user's question.
 
-    Shape: ``{"answer": str, "action": str | None, "projects": list | None,
-    "sources": list}``
+    Shape: ``{"answer": str, "action": str | None, "gesture": str | None,
+    "projects": list | None, "sources": list}``
     """
+    # Action requests (wave/walk/run) just perform the gesture and reply with a
+    # short acknowledgement. The frontend decides whether to actually play it
+    # (it refuses after a few requests in a row).
+    gesture = knowledge.detect_gesture(question)
+    if gesture:
+        return {
+            "answer": "Okay!",
+            "action": None,
+            "gesture": gesture,
+            "projects": None,
+            "sources": [],
+        }
+
     try:
         import rag_engine
 

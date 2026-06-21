@@ -22,6 +22,8 @@ export default function ChatBox({ onResponse }) {
   // Drives the intro greeting lifecycle: visible -> fading -> gone.
   const [introPhase, setIntroPhase] = useState("visible");
   const logRef = useRef(null);
+  // How many action gestures (wave/walk/run) we've performed this session.
+  const actionCount = useRef(0);
 
   // Auto-scroll to the latest message.
   useEffect(() => {
@@ -50,7 +52,22 @@ export default function ChatBox({ onResponse }) {
     setLoading(true);
 
     try {
-      const data = await ask(q);
+      let data = await ask(q);
+
+      // After three action gestures in a session, refuse further ones and
+      // don't play the animation.
+      if (data.gesture) {
+        if (actionCount.current >= 3) {
+          data = {
+            ...data,
+            gesture: null,
+            answer: "No. I've done enough of that for now!",
+          };
+        } else {
+          actionCount.current += 1;
+        }
+      }
+
       setMessages((m) => [
         ...m,
         { from: "bot", text: data.answer, sources: data.sources ?? [] },
