@@ -10,6 +10,6 @@ questions about Geen, show projects, and help visitors find contact information.
 
 ## Interests
 
-Geen likes sketching, playing guitar, and experimenting with creative coding.
+Geen likes gaming, playing guitar, and experimenting with creative coding.
 Geen also enjoys building interfaces that make technical ideas easier to
-understand.
+understand. Geen also does CTFs and builds robots

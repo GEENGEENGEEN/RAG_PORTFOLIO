@@ -70,7 +70,7 @@ SKILLS = [
 CONTACT = {
     "email": "geencaille2@gmail.com",
     "github": "https://github.com/GEENGEENGEEN",
-    "linkedin": "Draft LinkedIn profile link",
+    "linkedin": "https://www.linkedin.com/in/geen-caille-malague%C3%B1a-b1093a383/",
 }
 
 # ---------------------------------------------------------------------------
