@@ -48,14 +48,54 @@ export default function App() {
 
   return (
     <div className="app">
-      <Scene gesture={gesture} />
+      <main className="landing">
+        <section className="hero-grid">
+          <div className="avatar-card">
+            <Scene gesture={gesture} />
+          </div>
 
-      <header className="hero">
-        <h1>Geen Malaguena</h1>
-        <p>Ask my avatar anything</p>
-      </header>
+          <div className="intro">
+            <span className="eyebrow">
+              <svg
+                className="eyebrow-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  fill="currentColor"
+                  d="M12 2l1.6 4.4L18 8l-4.4 1.6L12 14l-1.6-4.4L6 8l4.4-1.6L12 2zM5 14l.9 2.5L8.5 17l-2.6.9L5 20.5 4.1 18 1.5 17l2.6-.5L5 14zm13 0l.9 2.5L21.5 17l-2.6.9L18 20.5 17.1 18 14.5 17l2.6-.5L18 14z"
+                />
+              </svg>
+              Meet Geenior
+            </span>
 
-      <ChatBox onResponse={handleResponse} />
+            <h1>My Digital Twinny</h1>
+
+            <p className="lede">
+              Curious about who I am? Wondering what I&apos;ve created? Want to
+              explore possibilities? Ask me anything and discover what we can
+              build together.
+            </p>
+
+            <div className="stats">
+              <div className="stat">
+                <span className="stat-num">50+</span>
+                <span className="stat-label">Projects</span>
+              </div>
+              <div className="stat">
+                <span className="stat-num">15+</span>
+                <span className="stat-label">Technologies</span>
+              </div>
+              <div className="stat">
+                <span className="stat-num">&#8734;</span>
+                <span className="stat-label">Ideas</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ChatBox onResponse={handleResponse} />
+      </main>
 
       <ProjectPaper
         projects={projects}
