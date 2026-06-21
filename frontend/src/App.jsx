@@ -36,7 +36,7 @@ export default function App() {
 
       <header className="hero">
         <h1>Geen Malaguena</h1>
-        <p>Creative full-stack developer / Ask my avatar anything</p>
+        <p>Ask my avatar anything</p>
       </header>
 
       <ChatBox onResponse={handleResponse} />
