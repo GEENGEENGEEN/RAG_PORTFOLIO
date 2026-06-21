@@ -7,6 +7,8 @@ Run with:
     uvicorn main:app --reload
 """
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -17,14 +19,24 @@ import qa_engine
 app = FastAPI(title="Low-Poly Portfolio API", version="1.0.0")
 
 # Allow the Vite dev server (and a couple common local origins) to call us.
+allowed_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+]
+
+# Comma-separated production origins, e.g.
+# FRONTEND_ORIGIN="https://my-portfolio.vercel.app"
+frontend_origin = os.getenv("FRONTEND_ORIGIN")
+if frontend_origin:
+    allowed_origins.extend(
+        origin.strip() for origin in frontend_origin.split(",") if origin.strip()
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-        "http://127.0.0.1:4173",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
