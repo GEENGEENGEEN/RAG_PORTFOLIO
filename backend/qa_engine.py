@@ -90,7 +90,7 @@ def answer(question: str) -> dict:
     gesture = knowledge.detect_gesture(question)
     if gesture:
         return {
-            "answer": "Okay!",
+            "answer": "You got it. Watch this!" if gesture == "dance" else "Okay!",
             "action": None,
             "gesture": gesture,
             "projects": None,

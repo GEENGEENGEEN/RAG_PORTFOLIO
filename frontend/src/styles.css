@@ -216,6 +216,45 @@ body {
   text-transform: uppercase;
 }
 
+.conversation-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.speech-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.15s ease, color 0.15s ease,
+    background 0.15s ease;
+}
+
+.speech-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.speech-toggle:hover {
+  transform: translateY(-1px);
+  border-color: rgba(247, 181, 0, 0.5);
+}
+
+.speech-toggle.is-on {
+  color: var(--accent);
+  border-color: rgba(247, 181, 0, 0.5);
+}
+
 .starter-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

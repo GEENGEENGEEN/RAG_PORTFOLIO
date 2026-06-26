@@ -4,10 +4,12 @@ import ChatBox from "./components/ChatBox.jsx";
 import ProjectPaper from "./components/ProjectPaper.jsx";
 
 // How long each action gesture plays before the avatar returns to idle (ms).
-const GESTURE_DURATION = { wave: 3500, walk: 5000, run: 5000 };
+// `dance` should match the keyframe routine length in Character.jsx
+// (ROUTINE_DURATION, currently ~8s). Bump this if you extend the routine.
+const GESTURE_DURATION = { wave: 3500, walk: 5000, run: 5000, dance: 8000 };
 
 export default function App() {
-  // "idle" | "handing" | "wave" | "walk" | "run" drives the character.
+  // "idle" | "handing" | "wave" | "walk" | "run" | "dance" drives the character.
   const [gesture, setGesture] = useState("idle");
   const [projects, setProjects] = useState(null);
   const [paperVisible, setPaperVisible] = useState(false);
@@ -52,19 +54,6 @@ export default function App() {
         <section className="hero-grid">
           <div className="avatar-card">
             <Scene gesture={gesture} />
-
-            <div className="speech-bubble" role="status">
-              <svg
-                className="speech-bubble__shape"
-                viewBox="0 0 320 150"
-                aria-hidden="true"
-              >
-                <path d="M60 24 H250 Q298 24 298 66 Q298 108 250 108 H96 L58 138 L80 108 H62 Q22 108 22 66 Q22 24 60 24 Z" />
-              </svg>
-              <p className="speech-bubble__text">
-                Can&apos;t talk right now &mdash; no backend hosting yet!
-              </p>
-            </div>
           </div>
 
           <div className="intro">

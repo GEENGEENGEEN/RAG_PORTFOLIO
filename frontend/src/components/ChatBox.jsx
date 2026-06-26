@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ask } from "../api.js";
+import { cancelSpeech, isSupported, speak } from "../tts.js";
 import storyIcon from "../icons/performing-arts.svg";
 import workIcon from "../icons/rocket.svg";
 import buildIcon from "../icons/settings.svg";
@@ -27,6 +28,9 @@ export default function ChatBox({ onResponse }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  // Whether responses are read aloud (only relevant if the browser supports it).
+  const ttsSupported = isSupported();
+  const [speechOn, setSpeechOn] = useState(ttsSupported);
   const logRef = useRef(null);
   // How many action gestures (wave/walk/run) we've performed this session.
   const actionCount = useRef(0);
@@ -38,9 +42,22 @@ export default function ChatBox({ onResponse }) {
     }
   }, [messages, loading]);
 
+  // Stop any in-progress speech when the component unmounts.
+  useEffect(() => cancelSpeech, []);
+
+  function toggleSpeech() {
+    setSpeechOn((on) => {
+      if (on) cancelSpeech();
+      return !on;
+    });
+  }
+
   async function send(question) {
     const q = question.trim();
     if (!q || loading) return;
+
+    // A new question interrupts whatever is currently being spoken.
+    cancelSpeech();
 
     setMessages((m) => [...m, { from: "user", text: q, sources: [] }]);
     setInput("");
@@ -67,6 +84,8 @@ export default function ChatBox({ onResponse }) {
         ...m,
         { from: "bot", text: data.answer, sources: data.sources ?? [] },
       ]);
+      // Speak exactly what is shown (after any refusal rewrite above).
+      if (speechOn) speak(data.answer);
       onResponse?.(data);
     } catch (err) {
       setMessages((m) => [
@@ -115,7 +134,33 @@ export default function ChatBox({ onResponse }) {
         </div>
       )}
 
-      <span className="section-label">START A CONVERSATION</span>
+      <div className="conversation-head">
+        <span className="section-label">START A CONVERSATION</span>
+        {ttsSupported && (
+          <button
+            type="button"
+            className={`speech-toggle${speechOn ? " is-on" : ""}`}
+            onClick={toggleSpeech}
+            aria-pressed={speechOn}
+            title={speechOn ? "Mute responses" : "Read responses aloud"}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {speechOn ? (
+                <path
+                  fill="currentColor"
+                  d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4.03v8.06A4.5 4.5 0 0 0 16.5 12zM14 3.23v2.06a7 7 0 0 1 0 13.42v2.06a9 9 0 0 0 0-17.54z"
+                />
+              ) : (
+                <path
+                  fill="currentColor"
+                  d="M3 9v6h4l5 5V4L7 9H3zm18.29-.71L19.88 6.88 17.7 9.06l-2.18-2.18-1.41 1.41L16.29 10.47l-2.18 2.18 1.41 1.41 2.18-2.18 2.18 2.18 1.41-1.41-2.18-2.18 2.18-2.18z"
+                />
+              )}
+            </svg>
+            <span>{speechOn ? "Voice on" : "Voice off"}</span>
+          </button>
+        )}
+      </div>
 
       <div className="starter-grid">
         {STARTERS.map((s) => (

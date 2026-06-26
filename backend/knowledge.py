@@ -172,6 +172,16 @@ GESTURE_KEYWORDS = {
     "wave": ["wave", "say hi", "say hello", "greet", "greeting"],
     "run": ["run", "running", "sprint", "sprinting", "jog", "jogging"],
     "walk": ["walk", "walking", "stroll", "strolling", "pace"],
+    "dance": [
+        "dance",
+        "dancing",
+        "boogie",
+        "groove",
+        "bust a move",
+        "tiktok",
+        "tik tok",
+        "show me some moves",
+    ],
 }
 
 
