@@ -4,3 +4,9 @@ backend/rag_index.json
 frontend/node_modules/
 frontend/dist/
 .env
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+!.env.example
